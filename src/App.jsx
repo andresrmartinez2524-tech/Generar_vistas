@@ -4,6 +4,8 @@ const DEFAULT_CONFIG = {
   proyecto: "01-LaReserva",
   subcarpeta: "vistas360",
   carpeta: "",
+  zcSubcarpeta: "spinners",
+  zcCarpeta: "zcs",
   extension: "webp",
   panoramaRotation: 90,
   cameraInitZoom: 1,
@@ -47,6 +49,144 @@ export default function App() {
   // Parámetros Sección 6: Hacia el otro lado
   const [origenLado2, setOrigenLado2] = useState("04");
   const [destinoLado2, setDestinoLado2] = useState("02");
+
+  // Navegación (Tabs)
+  const [pantallaActiva, setPantallaActiva] = useState("vistas"); // "vistas" | "zonas"
+
+  // Parámetros Sección 7: Zonas Comunes
+  const [zcNombresInput, setZcNombresInput] = useState("");
+  const [zcItems, setZcItems] = useState([]);
+  const [copiadoZC, setCopiadoZC] = useState(false);
+  const [copiadoNombresZC, setCopiadoNombresZC] = useState(false);
+  const [zcColapsados, setZcColapsados] = useState(true);
+  const [traduciendo, setTraduciendo] = useState(false);
+
+  const zcAgregarNombres = async () => {
+    const nuevos = zcNombresInput
+      .split(/[\n,]+/)
+      .map((s) => s.trim().replace(/\.[^/.]+$/, ""))
+      .filter(Boolean);
+    if (nuevos.length === 0) return;
+
+    setTraduciendo(true);
+
+    const nuevosItems = await Promise.all(
+      nuevos.map(async (nombre) => {
+        const clave = nombre.replace(/\s+/g, "");
+        const nombreLimpio = nombre.replace(/_/g, " "); // Quitar guiones bajos para los títulos
+        
+        let title2En = nombreLimpio;
+        try {
+          const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(nombreLimpio)}&langpair=es|en`);
+          const data = await res.json();
+          if (data?.responseData?.translatedText) {
+            title2En = data.responseData.translatedText;
+          }
+        } catch (e) {
+          console.error("Error al traducir:", e);
+        }
+
+        return {
+          id: crypto.randomUUID(),
+          clave,
+          title1Es: "Zonas Comunes",
+          title1En: "Amenities", // Corregido spelling de Amenities
+          title2Es: nombreLimpio,
+          title2En,
+          swiperImage: clave,
+        };
+      })
+    );
+
+    setZcItems((prev) => [...prev, ...nuevosItems]);
+    setZcNombresInput("");
+    setTraduciendo(false);
+  };
+
+  const zcActualizarItem = (id, campo, valor) => {
+    setZcItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [campo]: valor } : item))
+    );
+  };
+
+  const zcEliminarItem = (id) => {
+    setZcItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const zcGenerarBloque = (item) => {
+    const comma = config.jsonEstricto ? '' : ',';
+    const wrap = (k, v) => config.jsonEstricto ? '"' + k + '": ' + v : k + ': ' + v;
+    const str = (v) => '"' + v + '"';
+
+    const lines = [];
+    lines.push(str(item.clave) + ': {');
+    lines.push('  ' + wrap('enabled', 'true') + ',');
+    lines.push('  ' + wrap('btnImage', str(item.btnImage)) + ',');
+    lines.push('  ' + wrap('title1', '["<p>' + item.title1Es + '</p>", "<p>' + item.title1En + '</p>"]') + ',');
+    lines.push('  ' + wrap('title2', '['));
+    lines.push('    "<h2>' + item.title2Es + '</h2>",');
+    lines.push('    "<h2>' + item.title2En + '</h2>",');
+    lines.push('  ]') ;
+    lines.push('  ' + wrap('subtitle', '["", ""]') + ',');
+    lines.push('  ' + wrap('swiper', '{'));
+    lines.push('    ' + wrap('enabled', 'true') + ',');
+    lines.push('    ' + wrap('onClick', str('gallery')) + ',');
+    lines.push('    ' + wrap('imgObjectFit', str('cover')) + ',');
+    lines.push('    ' + wrap('height', str('200px')) + ',');
+    lines.push('    ' + wrap('width', str('100%')) + ',');
+    lines.push('    ' + wrap('slidesPerView', '1') + ',');
+    lines.push('    ' + wrap('pagination', 'true') + ',');
+    lines.push('    ' + wrap('images', '[' + str(item.swiperImage) + ']') + ',');
+    lines.push('  }') ;
+    lines.push('  ' + wrap('description', '["", ""]') + ',');
+    lines.push('  ' + wrap('vista360', '['));
+    lines.push('    {');
+    lines.push('      ' + wrap('enabled', 'true') + ',');
+    lines.push('      ' + wrap('url', str(item.url)) + ',');
+    lines.push('      ' + wrap('title', str('Vista exterior sur')) + ',');
+    lines.push('      ' + wrap('thumb', str('')) + ',');
+    lines.push('      ' + wrap('panoramaRotation', Number(config.panoramaRotation)) + ',');
+    lines.push('      ' + wrap('cameraInitZoom', Number(config.cameraInitZoom)) + ',');
+    lines.push('      ' + wrap('cameraZoomMinMax', '[' + Number(config.cameraZoomMin) + ', ' + Number(config.cameraZoomMax) + ']') + ',');
+    lines.push('      ' + wrap('cameraInitRotation', '[' + Number(config.cameraInitRotationX) + ', ' + Number(config.cameraInitRotationY) + ']') + ',');
+    lines.push('      ' + wrap('viewRestrictions', '{'));
+    lines.push('        ' + wrap('minY', Number(config.minY)) + ',');
+    lines.push('        ' + wrap('maxY', Number(config.maxY)) + ',');
+    lines.push('        ' + wrap('minX', Number(config.minX)) + ',');
+    lines.push('        ' + wrap('maxX', Number(config.maxX)) + comma);
+    lines.push('      }') ;
+    lines.push('    }' + comma);
+    lines.push('  ]') ;
+    lines.push('  ' + wrap('tour360', '['));
+    lines.push('    {');
+    lines.push('      ' + wrap('enabled', 'false') + ',');
+    lines.push('      ' + wrap('label', '["<h2>Pano 1</h2>", "<h2>Pano 1</h2>"]') + ',');
+    lines.push('      ' + wrap('url', str('')) + ',');
+    lines.push('    }' + comma);
+    lines.push('  ]') ;
+    lines.push('},');
+
+    return lines.join('\n');
+  };
+
+  const zcBloquesGenerados = useMemo(() => {
+    return zcItems.map((item) => {
+      const sub = config.zcSubcarpeta?.trim() ? `${config.zcSubcarpeta.trim()}/` : "";
+      const folder = config.zcCarpeta?.trim() ? `${config.zcCarpeta.trim()}/` : "";
+      const computedUrl = `{origenAssets}/images/${config.proyecto}/${sub}${folder}${item.clave}.${config.extension}`;
+      const computedBtnImage = `{origenAssets}/images/${config.proyecto}/${sub}${folder}jpg/${item.clave}.jpeg`;
+      
+      const currentUrl = item.url !== undefined ? item.url : computedUrl;
+      const currentBtnImage = item.btnImage !== undefined ? item.btnImage : computedBtnImage;
+      
+      const itemWithComputed = { ...item, url: currentUrl, btnImage: currentBtnImage };
+      
+      return {
+        item: itemWithComputed,
+        contenido: zcGenerarBloque(itemWithComputed),
+      };
+    });
+  }, [zcItems, config]);
 
   const actualizarConfig = (campo, valor) => {
     setConfig((prev) => ({
@@ -243,38 +383,88 @@ export default function App() {
   return (
     <div style={styles.app}>
       <header style={styles.header}>
-        <div style={styles.logo}>
-          <div style={styles.logoIcon}>360</div>
-          <div>
-            <h1 style={styles.h1}>Generador de Vistas 360°</h1>
-            <p style={styles.subtext}>Crea configuraciones de panoramas al instante</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div style={styles.logo}>
+            <div style={styles.logoIcon}>360</div>
+            <div>
+              <h1 style={styles.h1}>Generador de Vistas 360°</h1>
+              <p style={styles.subtext}>Crea configuraciones de panoramas al instante</p>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              style={{ ...styles.btnPrimary, backgroundColor: pantallaActiva === 'vistas' ? '#2563EB' : '#334155' }}
+              onClick={() => setPantallaActiva('vistas')}
+            >
+              Vistas 360
+            </button>
+            <button 
+              style={{ ...styles.btnPrimary, backgroundColor: pantallaActiva === 'zonas' ? '#6366F1' : '#334155' }}
+              onClick={() => setPantallaActiva('zonas')}
+            >
+              Zonas Comunes
+            </button>
           </div>
         </div>
       </header>
 
       <main style={styles.container}>
         <div style={styles.grid}>
-          {/* PANEL 1: ENTRADA */}
-          <section style={styles.card}>
-            <div style={styles.cardHeader}>
-              <div>
-                <h3 style={styles.h3}>1. Lista de Vistas</h3>
-                <p style={styles.subtext}>Pega tus identificadores</p>
+          {/* PANEL IZQUIERDO DINÁMICO SEGÚN PESTAÑA */}
+          {pantallaActiva === 'vistas' ? (
+            <section style={styles.card}>
+              <div style={styles.cardHeader}>
+                <div>
+                  <h3 style={styles.h3}>1. Lista de Vistas</h3>
+                  <p style={styles.subtext}>Pega tus identificadores</p>
+                </div>
+                <span style={styles.counter}>{listaBase.length}</span>
               </div>
-              <span style={styles.counter}>{listaBase.length}</span>
-            </div>
 
-            <textarea
-              style={styles.namesInput}
-              value={nombres}
-              onChange={(e) => setNombres(e.target.value)}
-              placeholder={`Ejemplo:\n1-301\n1-304\n2-501`}
-            />
+              <textarea
+                style={styles.namesInput}
+                value={nombres}
+                onChange={(e) => setNombres(e.target.value)}
+                placeholder={`Ejemplo:\n1-301\n1-304\n2-501`}
+              />
 
-            <button style={styles.btnSecondary} onClick={() => setNombres("")}>
-              Limpiar Entrada
-            </button>
-          </section>
+              <button style={styles.btnSecondary} onClick={() => setNombres("")}>
+                Limpiar Entrada
+              </button>
+            </section>
+          ) : (
+            <section style={{ ...styles.card, borderColor: '#6366F1' }}>
+              <div style={styles.cardHeader}>
+                <div>
+                  <h3 style={{ ...styles.h3, color: '#A5B4FC' }}>Zonas Comunes</h3>
+                  <p style={styles.subtext}>Ingresa los nombres de las zonas comunes</p>
+                </div>
+                <span style={{ ...styles.counter, color: '#A5B4FC' }}>{zcItems.length}</span>
+              </div>
+
+              <textarea
+                style={{ ...styles.namesInput, height: '175px' }}
+                value={zcNombresInput}
+                onChange={(e) => setZcNombresInput(e.target.value)}
+                placeholder={`Ejemplo:\nEntrada Principal\nPiscina\nGimnasio`}
+              />
+
+              <button
+                style={{
+                  ...styles.btnPrimary,
+                  backgroundColor: traduciendo ? '#94A3B8' : '#6366F1',
+                  width: '100%',
+                  marginTop: '12px',
+                  cursor: traduciendo ? 'not-allowed' : 'pointer'
+                }}
+                onClick={zcAgregarNombres}
+                disabled={traduciendo}
+              >
+                {traduciendo ? '⏳ Traduciendo y Agregando...' : '➕ Agregar Zonas Comunes'}
+              </button>
+            </section>
+          )}
 
           {/* PANEL 2: CONFIGURACIÓN */}
           <section style={styles.card}>
@@ -301,8 +491,8 @@ export default function App() {
                 <input
                   style={styles.input}
                   type="text"
-                  value={config.subcarpeta}
-                  onChange={(e) => actualizarConfig("subcarpeta", e.target.value)}
+                  value={pantallaActiva === 'vistas' ? config.subcarpeta : config.zcSubcarpeta}
+                  onChange={(e) => actualizarConfig(pantallaActiva === 'vistas' ? "subcarpeta" : "zcSubcarpeta", e.target.value)}
                 />
               </div>
 
@@ -311,8 +501,8 @@ export default function App() {
                 <input
                   style={styles.input}
                   type="text"
-                  value={config.carpeta}
-                  onChange={(e) => actualizarConfig("carpeta", e.target.value)}
+                  value={pantallaActiva === 'vistas' ? config.carpeta : config.zcCarpeta}
+                  onChange={(e) => actualizarConfig(pantallaActiva === 'vistas' ? "carpeta" : "zcCarpeta", e.target.value)}
                 />
               </div>
 
@@ -373,23 +563,25 @@ export default function App() {
           </section>
         </div>
 
-        {/* CONTROLES GLOBAL DE VISUALIZACIÓN */}
-        <div style={styles.globalBar}>
-          <button style={styles.btnActionSmall} onClick={() => setTodosColapsados(!todosColapsados)}>
-            {todosColapsados ? "▶ Expandir todo" : "▼ Colapsar todo"}
-          </button>
+        {pantallaActiva === 'vistas' && (
+          <>
+            {/* CONTROLES GLOBAL DE VISUALIZACIÓN */}
+            <div style={styles.globalBar}>
+              <button style={styles.btnActionSmall} onClick={() => setTodosColapsados(!todosColapsados)}>
+                {todosColapsados ? "▶ Expandir todo" : "▼ Colapsar todo"}
+              </button>
 
-          <label style={{ ...styles.subtext, cursor: "pointer", display: "flex", gap: "6px", alignItems: "center" }}>
-            <input
-              type="checkbox"
-              checked={config.jsonEstricto}
-              onChange={(e) => actualizarConfig("jsonEstricto", e.target.checked)}
-            />
-            JSON Estricto
-          </label>
-        </div>
+              <label style={{ ...styles.subtext, cursor: "pointer", display: "flex", gap: "6px", alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={config.jsonEstricto}
+                  onChange={(e) => actualizarConfig("jsonEstricto", e.target.checked)}
+                />
+                JSON Estricto
+              </label>
+            </div>
 
-        {/* SECCIÓN 3: RESULTADO GENERADO (ORIGINALES) */}
+            {/* SECCIÓN 3: RESULTADO GENERADO (ORIGINALES) */}
         <section style={styles.resultCard}>
           <div style={styles.cardHeader}>
             <div>
@@ -586,6 +778,86 @@ export default function App() {
             onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresLado2)}
           />
         </section>
+        </>
+        )}
+
+        {pantallaActiva === 'zonas' && (
+          <div style={{ marginTop: '24px' }}>
+            {zcItems.length > 0 && (
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ ...styles.h3, color: '#A5B4FC' }}>Edición de Zonas Comunes</h3>
+                <button
+                  style={{ ...styles.btnActionSmall, borderColor: '#EF4444', color: '#F87171' }}
+                  onClick={() => setZcItems([])}
+                >
+                  🗑 Limpiar Todo
+                </button>
+              </div>
+            )}
+
+            {/* Lista de ZC items editables */}
+            {zcItems.length === 0 ? (
+              <div style={styles.codeContainer}>
+                <span style={{ color: '#64748B' }}>// Agrega nombres de zonas comunes arriba para empezar...</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {zcBloquesGenerados.map((bloque, index) => (
+                  <ZonaComunCard
+                    key={bloque.item.id}
+                    index={index}
+                    bloque={bloque}
+                    onUpdate={zcActualizarItem}
+                    onDelete={zcEliminarItem}
+                  />
+                ))}
+              </div>
+            )}
+
+            {zcItems.length > 0 && (
+              <section style={{ ...styles.resultCard, borderColor: '#6366F1', borderWidth: '1px' }}>
+                <div style={styles.cardHeader}>
+                  <div>
+                    <h3 style={styles.h3}>Resultado Final Zonas Comunes</h3>
+                    <p style={styles.subtext}>Copia la estructura JSON generada</p>
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <label style={{ ...styles.subtext, cursor: "pointer", display: "flex", gap: "6px", alignItems: "center", marginRight: "10px" }}>
+                      <input
+                        type="checkbox"
+                        checked={config.jsonEstricto}
+                        onChange={(e) => actualizarConfig("jsonEstricto", e.target.checked)}
+                      />
+                      JSON Estricto
+                    </label>
+                    <button style={styles.btnActionSmall} onClick={() => setZcColapsados(!zcColapsados)}>
+                      {zcColapsados ? "▶ Expandir código" : "▼ Colapsar código"}
+                    </button>
+                    <button
+                      style={{ ...styles.btnPrimary, backgroundColor: copiadoZC ? '#10B981' : '#6366F1' }}
+                      onClick={() =>
+                        copiarTexto(
+                          zcBloquesGenerados.map((b) => b.contenido).join('\n\n'),
+                          setCopiadoZC
+                        )
+                      }
+                    >
+                      {copiadoZC ? '✓ Copiado' : '📋 Copiar Código Completo'}
+                    </button>
+                  </div>
+                </div>
+
+                <SeccionResultadoConNombres
+                  bloques={zcBloquesGenerados}
+                  colapsados={zcColapsados}
+                  colorClave="#A5B4FC"
+                  copiadoNombres={copiadoNombresZC}
+                  onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresZC)}
+                />
+              </section>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -633,6 +905,95 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
           </button>
         </div>
         <textarea style={styles.namesOutput} value={listaNombresTexto} readOnly />
+      </div>
+    </div>
+  );
+}
+
+function ZonaComunCard({ index, bloque, onUpdate, onDelete }) {
+  const item = bloque.item;
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#0F172A',
+        border: '1px solid #334155',
+        borderRadius: '8px',
+        padding: '12px',
+        borderLeft: '3px solid #6366F1',
+      }}
+    >
+      {/* Header con nombre y controles */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span style={{ color: '#A5B4FC', fontWeight: 'bold', fontSize: '14px' }}>
+          #{index + 1} — {item.clave}
+        </span>
+        <button
+          style={{ ...styles.btnActionSmall, borderColor: '#EF4444', color: '#F87171' }}
+          onClick={() => onDelete(item.id)}
+        >
+          ✕ Eliminar
+        </button>
+      </div>
+
+      {/* Campos editables */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        <div style={{ ...styles.field, gridColumn: 'span 2' }}>
+          <label style={styles.label}>Clave (nombre entrada)</label>
+          <input
+            style={styles.input}
+            value={item.clave}
+            onChange={(e) => onUpdate(item.id, 'clave', e.target.value)}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Title1 Español (p)</label>
+          <input
+            style={styles.input}
+            value={item.title1Es}
+            onChange={(e) => onUpdate(item.id, 'title1Es', e.target.value)}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Title1 Inglés (p)</label>
+          <input
+            style={styles.input}
+            value={item.title1En}
+            onChange={(e) => onUpdate(item.id, 'title1En', e.target.value)}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Title2 Español (h2)</label>
+          <input
+            style={styles.input}
+            value={item.title2Es}
+            onChange={(e) => onUpdate(item.id, 'title2Es', e.target.value)}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Title2 Inglés (h2)</label>
+          <input
+            style={styles.input}
+            value={item.title2En}
+            onChange={(e) => onUpdate(item.id, 'title2En', e.target.value)}
+          />
+        </div>
+        <div style={{ ...styles.field, gridColumn: 'span 2' }}>
+          <label style={styles.label}>URL vista360</label>
+          <input
+            style={styles.input}
+            value={item.url}
+            onChange={(e) => onUpdate(item.id, 'url', e.target.value)}
+          />
+        </div>
+        <div style={{ ...styles.field, gridColumn: 'span 2' }}>
+          <label style={styles.label}>btnImage URL</label>
+          <input
+            style={styles.input}
+            value={item.btnImage}
+            onChange={(e) => onUpdate(item.id, 'btnImage', e.target.value)}
+          />
+        </div>
       </div>
     </div>
   );
