@@ -168,7 +168,7 @@ export default function App() {
     lines.push('  ' + wrap('title2', '['));
     lines.push('    "<h2>' + item.title2Es + '</h2>",');
     lines.push('    "<h2>' + item.title2En + '</h2>",');
-    lines.push('  ],') ;
+    lines.push('  ],');
     lines.push('  ' + wrap('subtitle', '["", ""]') + ',');
     lines.push('  ' + wrap('swiper', '{'));
     lines.push('    ' + wrap('enabled', 'true') + ',');
@@ -179,7 +179,7 @@ export default function App() {
     lines.push('    ' + wrap('slidesPerView', '1') + ',');
     lines.push('    ' + wrap('pagination', 'true') + ',');
     lines.push('    ' + wrap('images', '[' + str(item.swiperImage) + ']') + ',');
-    lines.push('  },') ;
+    lines.push('  },');
     lines.push('  ' + wrap('description', '["", ""]') + ',');
     lines.push('  ' + wrap('vista360', '['));
     lines.push('    {');
@@ -198,14 +198,14 @@ export default function App() {
     lines.push('        ' + wrap('maxX', Number(config.maxX)) + comma);
     lines.push('      }');
     lines.push('    }' + comma);
-    lines.push('  ],') ;
+    lines.push('  ],');
     lines.push('  ' + wrap('tour360', '['));
     lines.push('    {');
     lines.push('      ' + wrap('enabled', 'false') + ',');
     lines.push('      ' + wrap('label', '["<h2>Pano 1</h2>", "<h2>Pano 1</h2>"]') + ',');
     lines.push('      ' + wrap('url', str('')) + ',');
     lines.push('    }' + comma);
-    lines.push('  ],') ;
+    lines.push('  ],');
     lines.push('},');
 
     return lines.join('\n');
@@ -215,17 +215,17 @@ export default function App() {
     return zcItems.map((item) => {
       const sub = config.zcSubcarpeta?.trim() ? `${config.zcSubcarpeta.trim()}/` : "";
       const folder = config.zcCarpeta?.trim() ? `${config.zcCarpeta.trim()}/` : "";
-      
+
       // La URL del asset se basa en la clave original para conservar el recurso físico
       const assetKey = item.claveOriginal || item.clave;
       const computedUrl = `{origenAssets}/images/${config.proyecto}/${sub}${folder}${assetKey}.${config.extension}`;
       const computedBtnImage = `{origenAssets}/images/${config.proyecto}/${sub}${folder}jpg/${assetKey}.jpeg`;
-      
+
       const currentUrl = item.url !== undefined ? item.url : computedUrl;
       const currentBtnImage = item.btnImage !== undefined ? item.btnImage : computedBtnImage;
-      
+
       const itemWithComputed = { ...item, url: currentUrl, btnImage: currentBtnImage };
-      
+
       return {
         nombre: itemWithComputed.clave,
         item: itemWithComputed,
@@ -470,7 +470,7 @@ export default function App() {
   const coincidenciaEstado = useMemo(() => {
     const totalOriginales = listaBase.length;
     const totalNuevos = listaReemplazos.length;
-    
+
     if (totalOriginales === 0 || totalNuevos === 0) {
       return { igual: false, mensaje: "Ingresa listas para comparar", falta: 0, sobra: 0, color: "var(--text-apple-secondary)" };
     }
@@ -489,7 +489,7 @@ export default function App() {
   const zcCoincidenciaEstado = useMemo(() => {
     const totalOriginales = zcListaBase.length;
     const totalNuevos = zcListaReemplazos.length;
-    
+
     if (totalOriginales === 0 || totalNuevos === 0) {
       return { igual: false, mensaje: "Ingresa listas para comparar", falta: 0, sobra: 0, color: "var(--text-apple-secondary)" };
     }
@@ -540,7 +540,7 @@ export default function App() {
             onClick={alternarTema}
             title="Alternar entre Tema Claro y Tema Oscuro"
           >
-            {tema === "dark" ? "☀️ Modo Claro" : "🌙 Modo Oscuro"}
+            {tema === "dark" ? "Modo Claro" : "Modo Oscuro"}
           </button>
         </div>
       </header>
