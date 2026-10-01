@@ -1,4 +1,27 @@
 import React, { useState, useMemo, useEffect } from "react";
+import {
+  Sun,
+  Moon,
+  Compass,
+  Layers,
+  Sparkles,
+  Copy,
+  Check,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Sliders,
+  Eye,
+  Code2,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  RotateCcw,
+  ArrowUpDown,
+  Building2,
+  X,
+  FileText
+} from "lucide-react";
 
 const DEFAULT_CONFIG = {
   proyecto: "01-LaReserva",
@@ -472,16 +495,16 @@ export default function App() {
     const totalNuevos = listaReemplazos.length;
 
     if (totalOriginales === 0 || totalNuevos === 0) {
-      return { igual: false, mensaje: "Ingresa listas para comparar", falta: 0, sobra: 0, color: "var(--text-apple-secondary)" };
+      return { igual: false, mensaje: "Ingresa listas para comparar", tipo: "neutral" };
     }
     if (totalOriginales === totalNuevos) {
-      return { igual: true, mensaje: `✓ Coincidencia exacta (${totalOriginales})`, falta: 0, sobra: 0, color: "var(--accent-apple-green)" };
+      return { igual: true, mensaje: `Coincidencia exacta (${totalOriginales})`, tipo: "success" };
     } else if (totalNuevos < totalOriginales) {
       const dif = totalOriginales - totalNuevos;
-      return { igual: false, mensaje: `⚠ Faltan ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, falta: dif, sobra: 0, color: "var(--accent-apple-red)" };
+      return { igual: false, mensaje: `Faltan ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, tipo: "danger" };
     } else {
       const dif = totalNuevos - totalOriginales;
-      return { igual: false, mensaje: `ℹ Sobran ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, falta: 0, sobra: dif, color: "var(--accent-apple-orange)" };
+      return { igual: false, mensaje: `Sobran ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, tipo: "warning" };
     }
   }, [listaBase, listaReemplazos]);
 
@@ -491,16 +514,16 @@ export default function App() {
     const totalNuevos = zcListaReemplazos.length;
 
     if (totalOriginales === 0 || totalNuevos === 0) {
-      return { igual: false, mensaje: "Ingresa listas para comparar", falta: 0, sobra: 0, color: "var(--text-apple-secondary)" };
+      return { igual: false, mensaje: "Ingresa listas para comparar", tipo: "neutral" };
     }
     if (totalOriginales === totalNuevos) {
-      return { igual: true, mensaje: `✓ Coincidencia exacta (${totalOriginales})`, falta: 0, sobra: 0, color: "var(--accent-apple-green)" };
+      return { igual: true, mensaje: `Coincidencia exacta (${totalOriginales})`, tipo: "success" };
     } else if (totalNuevos < totalOriginales) {
       const dif = totalOriginales - totalNuevos;
-      return { igual: false, mensaje: `⚠ Faltan ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, falta: dif, sobra: 0, color: "var(--accent-apple-red)" };
+      return { igual: false, mensaje: `Faltan ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, tipo: "danger" };
     } else {
       const dif = totalNuevos - totalOriginales;
-      return { igual: false, mensaje: `ℹ Sobran ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, falta: 0, sobra: dif, color: "var(--accent-apple-orange)" };
+      return { igual: false, mensaje: `Sobran ${dif} nombre(s) (${totalNuevos}/${totalOriginales})`, tipo: "warning" };
     }
   }, [zcListaBase, zcListaReemplazos]);
 
@@ -510,37 +533,40 @@ export default function App() {
       <header className="main-header">
         <div className="brand-wrapper">
           <div className={`brand-icon ${pantallaActiva === 'zonas' ? 'zonas' : ''}`}>
-            360
+            {pantallaActiva === 'zonas' ? <Building2 size={22} /> : <Compass size={22} />}
           </div>
           <div>
             <h1 className="brand-title">Generador de Vistas 360°</h1>
-            <p className="brand-subtitle">Estación Pro para Configuración JSON</p>
+            <p className="brand-subtitle">Estación Pro de Configuración JSON</p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <nav className="nav-tabs">
             <button
               className={`tab-btn ${pantallaActiva === 'vistas' ? 'active-vistas' : ''}`}
               onClick={() => setPantallaActiva('vistas')}
             >
+              <Eye size={15} />
               Vistas 360
             </button>
             <button
               className={`tab-btn ${pantallaActiva === 'zonas' ? 'active-zonas' : ''}`}
               onClick={() => setPantallaActiva('zonas')}
             >
+              <Building2 size={15} />
               Zonas Comunes
             </button>
           </nav>
 
           <button
             className="btn btn-secondary"
-            style={{ height: '32px', padding: '0 12px', fontSize: '12px' }}
+            style={{ height: '36px', padding: '0 14px', fontSize: '12.5px' }}
             onClick={alternarTema}
-            title="Alternar entre Tema Claro y Tema Oscuro"
+            title="Alternar Modo Claro / Oscuro"
           >
-            {tema === "dark" ? "Modo Claro" : "Modo Oscuro"}
+            {tema === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            <span>{tema === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>
           </button>
         </div>
       </header>
@@ -553,11 +579,19 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <section className="dash-card">
                 <div className="card-header-flex">
-                  <div>
-                    <h3 className="card-title">1. Lista de Vistas (Assets)</h3>
-                    <p className="card-desc">Nombre original de las imágenes físicas</p>
+                  <div className="card-title-group">
+                    <div className="card-title-icon">
+                      <Layers size={18} />
+                    </div>
+                    <div>
+                      <h3 className="card-title">1. Lista de Vistas (Assets)</h3>
+                      <p className="card-desc">Nombre original de las imágenes físicas</p>
+                    </div>
                   </div>
-                  <span className="badge-count">{listaBase.length}</span>
+                  <span className="badge-count">
+                    <Layers size={13} />
+                    {listaBase.length}
+                  </span>
                 </div>
 
                 <textarea
@@ -568,8 +602,13 @@ export default function App() {
                   placeholder={`Ejemplo:\n1-301\n1-304\n2-501`}
                 />
 
-                <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button className="btn btn-secondary" style={{ height: '30px', fontSize: '12px' }} onClick={() => setNombres("")}>
+                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ height: '32px', fontSize: '12px' }}
+                    onClick={() => setNombres("")}
+                  >
+                    <RotateCcw size={13} />
                     Limpiar Lista
                   </button>
                 </div>
@@ -578,17 +617,23 @@ export default function App() {
               {/* REEMPLAZO MASIVO DE NOMBRES APPLE STYLE */}
               <section className="dash-card">
                 <div className="card-header-flex">
-                  <div>
-                    <h3 className="card-title">Reemplazo de Nombres de Entrada</h3>
-                    <p className="card-desc">Sustituye la clave principal conservando la URL</p>
+                  <div className="card-title-group">
+                    <div className="card-title-icon">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <h3 className="card-title">Reemplazo de Nombres</h3>
+                      <p className="card-desc">Sustituye la clave principal conservando la URL</p>
+                    </div>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       checked={activarReemplazo}
                       onChange={(e) => setActivarReemplazo(e.target.checked)}
+                      style={{ accentColor: 'var(--accent-blue)', width: '16px', height: '16px' }}
                     />
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: activarReemplazo ? 'var(--accent-apple-blue)' : 'var(--text-apple-secondary)' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: activarReemplazo ? 'var(--accent-blue)' : 'var(--text-secondary)' }}>
                       {activarReemplazo ? 'Activo' : 'Inactivo'}
                     </span>
                   </label>
@@ -596,33 +641,22 @@ export default function App() {
 
                 <textarea
                   className="text-input-area"
-                  style={{ height: '120px', opacity: activarReemplazo ? 1 : 0.5 }}
+                  style={{ height: '120px', opacity: activarReemplazo ? 1 : 0.45 }}
                   value={nombresReemplazoInput}
                   onChange={(e) => setNombresReemplazoInput(e.target.value)}
                   placeholder={`Ejemplo nuevos nombres:\nVista-301-Final\nVista-304-Final\nVista-501-Final`}
                   disabled={!activarReemplazo}
                 />
 
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 'var(--radius-pill)',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: coincidenciaEstado.color,
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: `1px solid ${coincidenciaEstado.color}`
-                    }}
-                  >
-                    {coincidenciaEstado.mensaje}
-                  </span>
+                <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <StatusPill estado={coincidenciaEstado} />
 
                   <button
                     className="btn btn-secondary"
-                    style={{ height: '30px', fontSize: '12px' }}
+                    style={{ height: '32px', fontSize: '12px' }}
                     onClick={() => setNombresReemplazoInput("")}
                   >
+                    <RotateCcw size={13} />
                     Limpiar
                   </button>
                 </div>
@@ -632,11 +666,19 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <section className="dash-card">
                 <div className="card-header-flex">
-                  <div>
-                    <h3 className="card-title" style={{ color: 'var(--accent-apple-purple)' }}>Zonas Comunes</h3>
-                    <p className="card-desc">Ingresa los nombres (generación en tiempo real)</p>
+                  <div className="card-title-group">
+                    <div className="card-title-icon purple">
+                      <Building2 size={18} />
+                    </div>
+                    <div>
+                      <h3 className="card-title" style={{ color: 'var(--accent-purple)' }}>Zonas Comunes</h3>
+                      <p className="card-desc">Ingresa los nombres (generación en tiempo real)</p>
+                    </div>
                   </div>
-                  <span className="badge-count purple">{zcItems.length}</span>
+                  <span className="badge-count purple">
+                    <Building2 size={13} />
+                    {zcItems.length}
+                  </span>
                 </div>
 
                 <textarea
@@ -647,8 +689,13 @@ export default function App() {
                   placeholder={`Ejemplo:\nEntrada Principal\nPiscina\nGimnasio`}
                 />
 
-                <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button className="btn btn-secondary" style={{ height: '30px', fontSize: '12px' }} onClick={() => { setZcNombresInput(""); setZcCustomEdits({}); }}>
+                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ height: '32px', fontSize: '12px' }}
+                    onClick={() => { setZcNombresInput(""); setZcCustomEdits({}); }}
+                  >
+                    <RotateCcw size={13} />
                     Limpiar Lista Zonas
                   </button>
                 </div>
@@ -657,17 +704,23 @@ export default function App() {
               {/* REEMPLAZO MASIVO DE NOMBRES EN ZONAS COMUNES */}
               <section className="dash-card">
                 <div className="card-header-flex">
-                  <div>
-                    <h3 className="card-title" style={{ color: 'var(--accent-apple-purple)' }}>Reemplazo de Nombres de Entrada</h3>
-                    <p className="card-desc">Sustituye la clave principal conservando la URL</p>
+                  <div className="card-title-group">
+                    <div className="card-title-icon purple">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <h3 className="card-title" style={{ color: 'var(--accent-purple)' }}>Reemplazo de Nombres</h3>
+                      <p className="card-desc">Sustituye la clave principal conservando la URL</p>
+                    </div>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       checked={zcActivarReemplazo}
                       onChange={(e) => setZcActivarReemplazo(e.target.checked)}
+                      style={{ accentColor: 'var(--accent-purple)', width: '16px', height: '16px' }}
                     />
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: zcActivarReemplazo ? 'var(--accent-apple-purple)' : 'var(--text-apple-secondary)' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: zcActivarReemplazo ? 'var(--accent-purple)' : 'var(--text-secondary)' }}>
                       {zcActivarReemplazo ? 'Activo' : 'Inactivo'}
                     </span>
                   </label>
@@ -675,33 +728,22 @@ export default function App() {
 
                 <textarea
                   className="text-input-area purple-focus"
-                  style={{ height: '120px', opacity: zcActivarReemplazo ? 1 : 0.5 }}
+                  style={{ height: '120px', opacity: zcActivarReemplazo ? 1 : 0.45 }}
                   value={zcNombresReemplazoInput}
                   onChange={(e) => setZcNombresReemplazoInput(e.target.value)}
                   placeholder={`Ejemplo nuevos nombres:\nEntrada-Principal-01\nPiscina-Exterior\nGimnasio-Nivel-1`}
                   disabled={!zcActivarReemplazo}
                 />
 
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 'var(--radius-pill)',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: zcCoincidenciaEstado.color,
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: `1px solid ${zcCoincidenciaEstado.color}`
-                    }}
-                  >
-                    {zcCoincidenciaEstado.mensaje}
-                  </span>
+                <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <StatusPill estado={zcCoincidenciaEstado} />
 
                   <button
                     className="btn btn-secondary"
-                    style={{ height: '30px', fontSize: '12px' }}
+                    style={{ height: '32px', fontSize: '12px' }}
                     onClick={() => setZcNombresReemplazoInput("")}
                   >
+                    <RotateCcw size={13} />
                     Limpiar
                   </button>
                 </div>
@@ -712,9 +754,14 @@ export default function App() {
           {/* PANEL 2: CONFIGURACIÓN GENERAL */}
           <section className="dash-card">
             <div className="card-header-flex">
-              <div>
-                <h3 className="card-title">2. Parámetros General</h3>
-                <p className="card-desc">Configuración global para rutas y cámara</p>
+              <div className="card-title-group">
+                <div className="card-title-icon">
+                  <Sliders size={18} />
+                </div>
+                <div>
+                  <h3 className="card-title">2. Parámetros Generales</h3>
+                  <p className="card-desc">Configuración global para rutas y cámara</p>
+                </div>
               </div>
             </div>
 
@@ -785,7 +832,7 @@ export default function App() {
 
               <div className="form-field">
                 <label className="form-label">Zoom Mín / Máx</label>
-                <div style={{ display: "flex", gap: "6px" }}>
+                <div style={{ display: "flex", gap: "8px" }}>
                   <input
                     className="custom-input"
                     type="number"
@@ -811,16 +858,18 @@ export default function App() {
             {/* TOOLBAR APPLE */}
             <div className="global-toolbar">
               <button className="btn btn-secondary" onClick={() => setTodosColapsados(!todosColapsados)}>
-                {todosColapsados ? "▶ Expandir Vistas" : "▼ Colapsar Vistas"}
+                {todosColapsados ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                <span>{todosColapsados ? "Expandir Vistas" : "Colapsar Vistas"}</span>
               </button>
 
-              <label style={{ cursor: "pointer", display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "var(--text-apple-secondary)" }}>
+              <label style={{ cursor: "pointer", display: "flex", gap: "8px", alignItems: "center", fontSize: "13px", color: "var(--text-secondary)", userSelect: "none" }}>
                 <input
                   type="checkbox"
                   checked={config.jsonEstricto}
                   onChange={(e) => actualizarConfig("jsonEstricto", e.target.checked)}
+                  style={{ accentColor: 'var(--accent-blue)', width: '16px', height: '16px' }}
                 />
-                JSON Estricto
+                <span>JSON Estricto (RFC 8259)</span>
               </label>
             </div>
 
@@ -834,7 +883,7 @@ export default function App() {
                 {bloquesOriginales.length > 0 && (
                   <button
                     className={`btn ${copiadoOrig ? 'btn-secondary' : 'btn-primary-blue'}`}
-                    style={copiadoOrig ? { borderColor: 'var(--accent-apple-green)', color: 'var(--accent-apple-green)' } : {}}
+                    style={copiadoOrig ? { borderColor: 'var(--accent-green)', color: 'var(--accent-green)' } : {}}
                     onClick={() =>
                       copiarTexto(
                         bloquesOriginales.map((b) => b.contenido).join("\n\n"),
@@ -842,14 +891,15 @@ export default function App() {
                       )
                     }
                   >
-                    {copiadoOrig ? "✓ Copiado" : "Copiar Estructura Base"}
+                    {copiadoOrig ? <Check size={16} /> : <Copy size={16} />}
+                    <span>{copiadoOrig ? "Copiado" : "Copiar Estructura Base"}</span>
                   </button>
                 )}
               </div>
               <SeccionResultadoConNombres
                 bloques={bloquesOriginales}
                 colapsados={todosColapsados}
-                colorClave="var(--accent-apple-blue)"
+                colorClave="var(--accent-blue)"
                 copiadoNombres={copiadoNombresOrig}
                 onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresOrig)}
               />
@@ -859,20 +909,20 @@ export default function App() {
             <section className="result-section-card">
               <div className="card-header-flex">
                 <div>
-                  <h3 className="card-title">4. Vistas duplicadas verticalmente</h3>
+                  <h3 className="card-title">4. Vistas Duplicadas Verticalmente</h3>
                   <p className="card-desc">Calcula incrementos de pisos en la dirección elegida (+/- 100, 200...)</p>
                 </div>
                 <div className="inline-form-controls">
                   <div className="control-item">
                     <span>Dirección:</span>
                     <select
-                      style={{ background: 'transparent', border: 'none', color: 'var(--text-apple-primary)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
                       value={direccionPisos}
                       onChange={(e) => setDireccionPisos(e.target.value)}
                     >
-                      <option value="ambos" style={{ background: 'var(--bg-dark-card)' }}>Arriba y Abajo</option>
-                      <option value="arriba" style={{ background: 'var(--bg-dark-card)' }}>Solo Arriba</option>
-                      <option value="abajo" style={{ background: 'var(--bg-dark-card)' }}>Solo Abajo</option>
+                      <option value="ambos">Arriba y Abajo</option>
+                      <option value="arriba">Solo Arriba</option>
+                      <option value="abajo">Solo Abajo</option>
                     </select>
                   </div>
                   <div className="control-item">
@@ -915,7 +965,8 @@ export default function App() {
                         )
                       }
                     >
-                      {copiadoVert ? "✓ Copiado" : `Copiar (${direccionPisos === 'ambos' ? 'Arriba/Abajo' : direccionPisos === 'arriba' ? 'Solo Arriba' : 'Solo Abajo'})`}
+                      {copiadoVert ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copiadoVert ? "Copiado" : `Copiar (${direccionPisos === 'ambos' ? 'Arriba/Abajo' : direccionPisos === 'arriba' ? 'Solo Arriba' : 'Solo Abajo'})`}</span>
                     </button>
                   )}
                 </div>
@@ -923,7 +974,7 @@ export default function App() {
               <SeccionResultadoConNombres
                 bloques={bloquesVerticales}
                 colapsados={todosColapsados}
-                colorClave="var(--accent-apple-purple)"
+                colorClave="var(--accent-purple)"
                 copiadoNombres={copiadoNombresVert}
                 onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresVert)}
               />
@@ -933,15 +984,16 @@ export default function App() {
             <section className="result-section-card">
               <div className="card-header-flex">
                 <div>
-                  <h3 className="card-title">5. Vistas duplicadas hacia un lado</h3>
+                  <h3 className="card-title">5. Vistas Duplicadas Hacia Un Lado</h3>
                   <p className="card-desc">Filtra y reemplaza terminaciones numéricas</p>
                 </div>
                 <div className="inline-form-controls">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-apple-secondary)', marginRight: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)', marginRight: '6px', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       checked={incluirVertLado1}
                       onChange={(e) => setIncluirVertLado1(e.target.checked)}
+                      style={{ accentColor: 'var(--accent-blue)' }}
                     />
                     <span>+ Incluir Verticales</span>
                   </label>
@@ -973,7 +1025,8 @@ export default function App() {
                         )
                       }
                     >
-                      {copiadoLado1 ? "✓ Copiado" : "Copiar Este Lado"}
+                      {copiadoLado1 ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copiadoLado1 ? "Copiado" : "Copiar Este Lado"}</span>
                     </button>
                   )}
                 </div>
@@ -981,7 +1034,7 @@ export default function App() {
               <SeccionResultadoConNombres
                 bloques={bloquesLado1}
                 colapsados={todosColapsados}
-                colorClave="var(--accent-apple-blue)"
+                colorClave="var(--accent-blue)"
                 copiadoNombres={copiadoNombresLado1}
                 onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresLado1)}
               />
@@ -991,15 +1044,16 @@ export default function App() {
             <section className="result-section-card">
               <div className="card-header-flex">
                 <div>
-                  <h3 className="card-title">6. Vistas duplicadas hacia el otro lado</h3>
+                  <h3 className="card-title">6. Vistas Duplicadas Hacia El Otro Lado</h3>
                   <p className="card-desc">Filtra y reemplaza la segunda terminación de lista</p>
                 </div>
                 <div className="inline-form-controls">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-apple-secondary)', marginRight: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)', marginRight: '6px', userSelect: 'none' }}>
                     <input
                       type="checkbox"
                       checked={incluirVertLado2}
                       onChange={(e) => setIncluirVertLado2(e.target.checked)}
+                      style={{ accentColor: 'var(--accent-orange)' }}
                     />
                     <span>+ Incluir Verticales</span>
                   </label>
@@ -1031,7 +1085,8 @@ export default function App() {
                         )
                       }
                     >
-                      {copiadoLado2 ? "✓ Copiado" : "Copiar Otro Lado"}
+                      {copiadoLado2 ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copiadoLado2 ? "Copiado" : "Copiar Otro Lado"}</span>
                     </button>
                   )}
                 </div>
@@ -1039,7 +1094,7 @@ export default function App() {
               <SeccionResultadoConNombres
                 bloques={bloquesLado2}
                 colapsados={todosColapsados}
-                colorClave="var(--accent-apple-orange)"
+                colorClave="var(--accent-orange)"
                 copiadoNombres={copiadoNombresLado2}
                 onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresLado2)}
               />
@@ -1051,12 +1106,16 @@ export default function App() {
           <div style={{ marginTop: '16px' }}>
             {zcItems.length > 0 && (
               <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="card-title" style={{ color: 'var(--accent-apple-purple)' }}>Edición de Zonas Comunes ({zcItems.length})</h3>
+                <h3 className="card-title" style={{ color: 'var(--accent-purple)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={18} />
+                  Edición de Zonas Comunes ({zcItems.length})
+                </h3>
                 <button
-                  className="btn btn-secondary"
-                  style={{ color: 'var(--accent-apple-red)' }}
+                  className="btn btn-ghost-danger"
+                  style={{ height: '32px', fontSize: '12px' }}
                   onClick={() => { setZcNombresInput(""); setZcNombresReemplazoInput(""); setZcCustomEdits({}); }}
                 >
+                  <Trash2 size={14} />
                   Limpiar Todo
                 </button>
               </div>
@@ -1064,8 +1123,12 @@ export default function App() {
 
             {zcItems.length === 0 ? (
               <div className="code-viewer-container empty-placeholder">
-                <div className="empty-icon-box">ZC</div>
-                <p style={{ color: 'var(--text-apple-secondary)' }}>Escribe los nombres de las zonas comunes en el cuadro superior para generar en tiempo real...</p>
+                <div className="empty-icon-box">
+                  <Building2 size={24} />
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px' }}>
+                  Escribe los nombres de las zonas comunes en el cuadro superior para generar en tiempo real...
+                </p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
@@ -1090,7 +1153,8 @@ export default function App() {
                   </div>
                   <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                     <button className="btn btn-secondary" onClick={() => setZcColapsados(!zcColapsados)}>
-                      {zcColapsados ? "▶ Expandir código" : "▼ Colapsar código"}
+                      {zcColapsados ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
+                      <span>{zcColapsados ? "Expandir código" : "Colapsar código"}</span>
                     </button>
                     <button
                       className="btn btn-primary-purple"
@@ -1101,7 +1165,8 @@ export default function App() {
                         )
                       }
                     >
-                      {copiadoZC ? '✓ Copiado' : 'Copiar Código Completo'}
+                      {copiadoZC ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copiadoZC ? 'Copiado' : 'Copiar Código Completo'}</span>
                     </button>
                   </div>
                 </div>
@@ -1109,7 +1174,7 @@ export default function App() {
                 <SeccionResultadoConNombres
                   bloques={zcBloquesGenerados}
                   colapsados={zcColapsados}
-                  colorClave="var(--accent-apple-purple)"
+                  colorClave="var(--accent-purple)"
                   copiadoNombres={copiadoNombresZC}
                   onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresZC)}
                 />
@@ -1122,6 +1187,39 @@ export default function App() {
   );
 }
 
+function StatusPill({ estado }) {
+  if (estado.tipo === "success") {
+    return (
+      <span className="status-pill success">
+        <CheckCircle2 size={14} />
+        {estado.mensaje}
+      </span>
+    );
+  }
+  if (estado.tipo === "danger") {
+    return (
+      <span className="status-pill danger">
+        <AlertTriangle size={14} />
+        {estado.mensaje}
+      </span>
+    );
+  }
+  if (estado.tipo === "warning") {
+    return (
+      <span className="status-pill warning">
+        <Info size={14} />
+        {estado.mensaje}
+      </span>
+    );
+  }
+  return (
+    <span className="status-pill neutral">
+      <Info size={14} />
+      {estado.mensaje}
+    </span>
+  );
+}
+
 function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNombres, onCopiarNombres }) {
   const listaNombresTexto = useMemo(() => {
     return bloques.map((b) => b.nombre).join("\n");
@@ -1129,8 +1227,9 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
 
   if (bloques.length === 0) {
     return (
-      <div className="code-viewer-container empty-placeholder">
-        <span>// No hay vistas generadas en esta sección...</span>
+      <div className="code-viewer-container empty-placeholder" style={{ padding: '36px 20px' }}>
+        <Code2 size={24} style={{ marginBottom: '10px', color: 'var(--text-tertiary)' }} />
+        <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>No hay vistas generadas en esta sección...</span>
       </div>
     );
   }
@@ -1143,9 +1242,10 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
             <details open={!colapsados}>
               <summary className="code-block-header">
                 <span className="code-block-title">
-                  <span style={{ color: colorClave }}>"{item.nombre}"</span>
+                  <Code2 size={14} style={{ color: colorClave }} />
+                  <span style={{ color: colorClave, fontWeight: '500' }}>"{item.nombre}"</span>
                 </span>
-                <span style={{ color: 'var(--text-apple-tertiary)', fontSize: '11px' }}>JSON5</span>
+                <span style={{ color: 'var(--text-tertiary)', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>JSON5</span>
               </summary>
               <pre className="code-content-pre">{item.contenido}</pre>
             </details>
@@ -1153,20 +1253,24 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'var(--bg-dark-input)', border: '1px solid var(--border-apple)', borderRadius: 'var(--radius-input)', padding: '14px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-apple-secondary)' }}>Nombres ({bloques.length})</span>
+          <span style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FileText size={14} />
+            Nombres ({bloques.length})
+          </span>
           <button
             className="btn btn-secondary"
             style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
             onClick={() => onCopiarNombres(listaNombresTexto)}
           >
-            {copiadoNombres ? "✓ Copiado" : "Copiar"}
+            {copiadoNombres ? <Check size={12} /> : <Copy size={12} />}
+            <span>{copiadoNombres ? "Copiado" : "Copiar"}</span>
           </button>
         </div>
         <textarea
           className="text-input-area"
-          style={{ height: '100%', minHeight: '180px', color: colorClave, background: 'var(--bg-dark-base)' }}
+          style={{ height: '100%', minHeight: '180px', color: colorClave, background: 'var(--bg-code)', border: '1px solid var(--border-subtle)' }}
           value={listaNombresTexto}
           readOnly
         />
@@ -1182,24 +1286,25 @@ function ZonaComunCard({ index, bloque, onUpdate, onDelete }) {
     <div
       className="dash-card"
       style={{
-        padding: '16px',
-        borderLeft: '3px solid var(--accent-apple-purple)',
+        padding: '18px',
+        borderLeft: '3px solid var(--accent-purple)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <span style={{ color: 'var(--accent-apple-purple)', fontWeight: '600', fontSize: '13px', fontFamily: 'var(--font-apple-mono)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <span style={{ color: 'var(--accent-purple)', fontWeight: '600', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
           #{index + 1} — {item.clave}
         </span>
         <button
-          className="btn btn-secondary"
-          style={{ height: '26px', padding: '0 8px', fontSize: '11px', color: 'var(--accent-apple-red)' }}
+          className="btn btn-ghost-danger"
+          style={{ height: '28px', padding: '0 10px', fontSize: '11.5px' }}
           onClick={() => onDelete(item.id)}
         >
+          <Trash2 size={13} />
           Eliminar
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div className="form-field full-width">
           <label className="form-label">Clave</label>
           <input
