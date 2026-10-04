@@ -23,6 +23,8 @@ El proyecto sigue estrictamente el workflow `/estilo` (Apple HIG / Nu Style) con
 - **Secciones Principales:**
   - **Vistas 360:** Generación de bloques JSON5 para assets, duplicación vertical (pisos) y duplicación lateral (vecinos).
   - **Zonas Comunes:** Generación de bloques JSON5 para configuraciones de galería/tour virtual con soporte para traducción automática (ES/EN).
+  - **Generación Condicional:** Soporte para comentar condicionalmente (`//`) los bloques de `viewRestrictions` en la salida JSON.
+  - **Galería:** Generación de bloques JSON5 organizando por categorías ("Renders" y "Plantas"), ajustando rutas dinámicamente con extensiones independientes (ej. `jpg`) y soporte para prefijos condicionales (`LOW_`).
 
 ## Current State
 - Refactorización completada para eliminar inline styles en `App.jsx`.

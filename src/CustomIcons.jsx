@@ -1,5 +1,14 @@
 import React from 'react';
 
+// Duotone Image Icon
+export const IconImage = ({ size = 24, color = "currentColor", className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="8.5" cy="8.5" r="1.5" fill={color} fillOpacity="0.25" stroke={color} strokeWidth="1.5"/>
+    <path d="M21 15L16 10L5 21" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 // Duotone Layers Icon
 export const IconLayers = ({ size = 24, color = "currentColor", className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>

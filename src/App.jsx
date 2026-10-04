@@ -16,7 +16,7 @@ import {
   X,
   FileText
 } from "lucide-react";
-import { IconLayers, IconSparkles, IconSliders, IconEye, IconBuilding, IconCode } from "./CustomIcons";
+import { IconLayers, IconSparkles, IconSliders, IconEye, IconBuilding, IconCode, IconImage } from "./CustomIcons";
 
 const DEFAULT_CONFIG = {
   proyecto: "01-Nombre Del Proyecto",
@@ -36,6 +36,12 @@ const DEFAULT_CONFIG = {
   minX: -40,
   maxX: 40,
   jsonEstricto: false,
+  comentarViewRestrictions: false,
+  galSubcarpeta: "galerias",
+  galCarpetaRenders: "renders",
+  galCarpetaPlantas: "plantas",
+  galUsarPrefijoLow: false,
+  galExtension: "jpg",
 };
 
 export default function App() {
@@ -82,11 +88,23 @@ export default function App() {
   const [zcNombresReemplazoInput, setZcNombresReemplazoInput] = useState("");
   const [zcActivarReemplazo, setZcActivarReemplazo] = useState(false);
 
-  const [zcCustomEdits, setZcCustomEdits] = useState({}); // Cambios manuales por id
   const [traduccionesMap, setTraduccionesMap] = useState({}); // Caché de traducciones
   const [copiadoZC, setCopiadoZC] = useState(false);
   const [copiadoNombresZC, setCopiadoNombresZC] = useState(false);
   const [zcColapsados, setZcColapsados] = useState(true);
+
+  // Parámetros Sección 8: Galería
+  const [galRendersInput, setGalRendersInput] = useState("");
+  const [galRendersReemplazoInput, setGalRendersReemplazoInput] = useState("");
+  const [galActivarReemplazoRenders, setGalActivarReemplazoRenders] = useState(false);
+
+  const [galPlantasInput, setGalPlantasInput] = useState("");
+  const [galPlantasReemplazoInput, setGalPlantasReemplazoInput] = useState("");
+  const [galActivarReemplazoPlantas, setGalActivarReemplazoPlantas] = useState(false);
+
+  const [copiadoGal, setCopiadoGal] = useState(false);
+  const [copiadoNombresGal, setCopiadoNombresGal] = useState(false);
+  const [galColapsados, setGalColapsados] = useState(true);
 
   // Lista base parseada de Zonas Comunes en tiempo real
   const zcListaBase = useMemo(() => {
@@ -139,39 +157,20 @@ export default function App() {
         claveFinal = zcListaReemplazos[index].replace(/\s+/g, "");
       }
 
-      const custom = zcCustomEdits[id] || {};
-
       return {
         id,
         claveOriginal,
-        clave: custom.clave !== undefined ? custom.clave : claveFinal,
-        title1Es: custom.title1Es !== undefined ? custom.title1Es : "Zonas Comunes",
-        title1En: custom.title1En !== undefined ? custom.title1En : "Amenities",
-        title2Es: custom.title2Es !== undefined ? custom.title2Es : nombreLimpio,
-        title2En: custom.title2En !== undefined ? custom.title2En : title2EnAuto,
-        swiperImage: custom.swiperImage !== undefined ? custom.swiperImage : (custom.clave || claveFinal),
-        url: custom.url,
-        btnImage: custom.btnImage,
+        clave: claveFinal,
+        title1Es: "Zonas Comunes",
+        title1En: "Amenities",
+        title2Es: nombreLimpio,
+        title2En: title2EnAuto,
+        swiperImage: claveFinal,
+        url: undefined,
+        btnImage: undefined,
       };
     });
-  }, [zcListaBase, zcActivarReemplazo, zcListaReemplazos, zcCustomEdits, traduccionesMap]);
-
-  const zcActualizarItem = (id, campo, valor) => {
-    setZcCustomEdits((prev) => ({
-      ...prev,
-      [id]: {
-        ...(prev[id] || {}),
-        [campo]: valor,
-      },
-    }));
-  };
-
-  const zcEliminarItem = (id) => {
-    const itemTarget = zcItems.find(i => i.id === id);
-    if (!itemTarget) return;
-    const nuevasLineas = zcListaBase.filter(n => n.replace(/\s+/g, "") !== itemTarget.claveOriginal && n !== itemTarget.title2Es);
-    setZcNombresInput(nuevasLineas.join("\n"));
-  };
+  }, [zcListaBase, zcActivarReemplazo, zcListaReemplazos, traduccionesMap]);
 
   const zcGenerarBloque = (item) => {
     const comma = config.jsonEstricto ? '' : ',';
@@ -209,12 +208,14 @@ export default function App() {
     lines.push('      ' + wrap('cameraInitZoom', Number(config.cameraInitZoom)) + ',');
     lines.push('      ' + wrap('cameraZoomMinMax', '[' + Number(config.cameraZoomMin) + ', ' + Number(config.cameraZoomMax) + ']') + ',');
     lines.push('      ' + wrap('cameraInitRotation', '[' + Number(config.cameraInitRotationX) + ', ' + Number(config.cameraInitRotationY) + ']') + ',');
-    lines.push('      ' + wrap('viewRestrictions', '{'));
-    lines.push('        ' + wrap('minY', Number(config.minY)) + ',');
-    lines.push('        ' + wrap('maxY', Number(config.maxY)) + ',');
-    lines.push('        ' + wrap('minX', Number(config.minX)) + ',');
-    lines.push('        ' + wrap('maxX', Number(config.maxX)) + comma);
-    lines.push('      }');
+    
+    const vrPref = config.comentarViewRestrictions ? '// ' : '';
+    lines.push(vrPref + '      ' + wrap('viewRestrictions', '{'));
+    lines.push(vrPref + '        ' + wrap('minY', Number(config.minY)) + ',');
+    lines.push(vrPref + '        ' + wrap('maxY', Number(config.maxY)) + ',');
+    lines.push(vrPref + '        ' + wrap('minX', Number(config.minX)) + ',');
+    lines.push(vrPref + '        ' + wrap('maxX', Number(config.maxX)) + comma);
+    lines.push(vrPref + '      }' + comma);
     lines.push('    }' + comma);
     lines.push('  ],');
     lines.push('  ' + wrap('tour360', '['));
@@ -259,6 +260,111 @@ export default function App() {
     }));
   };
 
+  // --- LOGICA GALERIA ---
+  const galRendersBase = useMemo(() => galRendersInput.split(/[\n,]+/).map((s) => s.trim().replace(/\.[^/.]+$/, "")).filter(Boolean), [galRendersInput]);
+  const galRendersReemplazos = useMemo(() => galRendersReemplazoInput.split(/[\n,]+/).map((s) => s.trim().replace(/\.[^/.]+$/, "")).filter(Boolean), [galRendersReemplazoInput]);
+
+  const galPlantasBase = useMemo(() => galPlantasInput.split(/[\n,]+/).map((s) => s.trim().replace(/\.[^/.]+$/, "")).filter(Boolean), [galPlantasInput]);
+  const galPlantasReemplazos = useMemo(() => galPlantasReemplazoInput.split(/[\n,]+/).map((s) => s.trim().replace(/\.[^/.]+$/, "")).filter(Boolean), [galPlantasReemplazoInput]);
+
+  const galGenerarBloque = (clave, urlAsset, label, isPlantas) => {
+    const comma = config.jsonEstricto ? '' : ',';
+    const wrap = (k, v) => config.jsonEstricto ? '"' + k + '": ' + v : k + ': ' + v;
+    const str = (v) => '"' + v + '"';
+
+    const cat = isPlantas ? "Plantas" : "Renders";
+
+    const lines = [];
+    lines.push(str(clave) + ': {');
+    lines.push('  ' + wrap('enabled', 'true') + ',');
+    lines.push('  ' + wrap('url', str(urlAsset)) + ',');
+    lines.push('  ' + wrap('label', str(label)) + ',');
+    lines.push('  ' + wrap('tooltip', str('')) + ',');
+    lines.push('  ' + wrap('categories', '["' + cat + '", "' + cat + '"]') + ',');
+    lines.push('  ' + wrap('nested', '{'));
+    lines.push('    "Image1": {');
+    lines.push('      ' + wrap('enabled', 'false') + ',');
+    lines.push('      ' + wrap('url', str('{origenAssets}/images/01-NombreProyecto/....')) + ',');
+    lines.push('      ' + wrap('tooltip', str('abc123')) + comma);
+    lines.push('    }' + comma);
+    lines.push('  }' + comma);
+    lines.push('},');
+
+    return lines.join('\n');
+  };
+
+  const galBloquesGenerados = useMemo(() => {
+    const bloques = [];
+
+    // Generar Renders
+    galRendersBase.forEach((nombreOriginal, index) => {
+      let claveFinal = nombreOriginal;
+      if (galActivarReemplazoRenders && index < galRendersReemplazos.length && galRendersReemplazos[index]) {
+        claveFinal = galRendersReemplazos[index];
+      }
+      
+      const valSub = config.galSubcarpeta ?? "galerias";
+      const valFolder = config.galCarpetaRenders ?? "renders";
+      const sub = valSub.trim() ? `${valSub.trim()}/` : "";
+      const folder = valFolder.trim() ? `${valFolder.trim()}/` : "";
+      const prefijo = config.galUsarPrefijoLow ? "LOW_" : "";
+      const ext = config.galExtension ?? "jpg";
+      const urlAsset = `{origenAssets}/images/${config.proyecto}/${sub}${folder}${prefijo}${nombreOriginal}.${ext}`;
+      
+      const label = claveFinal.replace(/_/g, " ");
+
+      bloques.push({
+        nombre: claveFinal,
+        contenido: galGenerarBloque(claveFinal, urlAsset, label, false)
+      });
+    });
+
+    // Generar Plantas
+    galPlantasBase.forEach((nombreOriginal, index) => {
+      let claveFinal = nombreOriginal;
+      if (galActivarReemplazoPlantas && index < galPlantasReemplazos.length && galPlantasReemplazos[index]) {
+        claveFinal = galPlantasReemplazos[index];
+      }
+      
+      const valSub = config.galSubcarpeta ?? "galerias";
+      const valFolder = config.galCarpetaPlantas ?? "plantas";
+      const sub = valSub.trim() ? `${valSub.trim()}/` : "";
+      const folder = valFolder.trim() ? `${valFolder.trim()}/` : "";
+      const prefijo = config.galUsarPrefijoLow ? "LOW_" : "";
+      const ext = config.galExtension ?? "jpg";
+      const urlAsset = `{origenAssets}/images/${config.proyecto}/${sub}${folder}${prefijo}${nombreOriginal}.${ext}`;
+      
+      const label = claveFinal.replace(/_/g, " ");
+
+      bloques.push({
+        nombre: claveFinal,
+        contenido: galGenerarBloque(claveFinal, urlAsset, label, true)
+      });
+    });
+
+    return bloques;
+  }, [galRendersBase, galRendersReemplazos, galPlantasBase, galPlantasReemplazos, galActivarReemplazoRenders, galActivarReemplazoPlantas, config]);
+
+  const galRendersCoincidenciaEstado = useMemo(() => {
+    const totalOriginales = galRendersBase.length;
+    const totalNuevos = galRendersReemplazos.length;
+    if (totalOriginales === 0 || totalNuevos === 0) return { igual: false, mensaje: "Ingresa listas para comparar", tipo: "neutral" };
+    if (totalOriginales === totalNuevos) return { igual: true, mensaje: `Coincidencia exacta (${totalOriginales})`, tipo: "success" };
+    else if (totalNuevos < totalOriginales) return { igual: false, mensaje: `Faltan ${totalOriginales - totalNuevos} nombre(s)`, tipo: "danger" };
+    else return { igual: false, mensaje: `Sobran ${totalNuevos - totalOriginales} nombre(s)`, tipo: "warning" };
+  }, [galRendersBase, galRendersReemplazos]);
+
+  const galPlantasCoincidenciaEstado = useMemo(() => {
+    const totalOriginales = galPlantasBase.length;
+    const totalNuevos = galPlantasReemplazos.length;
+    if (totalOriginales === 0 || totalNuevos === 0) return { igual: false, mensaje: "Ingresa listas para comparar", tipo: "neutral" };
+    if (totalOriginales === totalNuevos) return { igual: true, mensaje: `Coincidencia exacta (${totalOriginales})`, tipo: "success" };
+    else if (totalNuevos < totalOriginales) return { igual: false, mensaje: `Faltan ${totalOriginales - totalNuevos} nombre(s)`, tipo: "danger" };
+    else return { igual: false, mensaje: `Sobran ${totalNuevos - totalOriginales} nombre(s)`, tipo: "warning" };
+  }, [galPlantasBase, galPlantasReemplazos]);
+  // --- FIN LOGICA GALERIA ---
+
+
   const listaBase = useMemo(() => {
     return nombres
       .split(/[\n,]+/)
@@ -285,6 +391,8 @@ export default function App() {
     const folderSegment = config.carpeta?.trim() ? `${config.carpeta.trim()}/` : "";
     const urlAsset = `{origenAssets}/images/${config.proyecto}/${subfolderSegment}${folderSegment}${nombreUrl}.${config.extension}`;
 
+    const vrPref = config.comentarViewRestrictions ? '// ' : '';
+
     if (config.jsonEstricto) {
       return `"${nombreClave}": [
   {
@@ -296,12 +404,12 @@ export default function App() {
     "cameraInitZoom": ${Number(config.cameraInitZoom)},
     "cameraZoomMinMax": [${Number(config.cameraZoomMin)}, ${Number(config.cameraZoomMax)}],
     "cameraInitRotation": [${Number(config.cameraInitRotationX)}, ${Number(config.cameraInitRotationY)}],
-    "viewRestrictions": {
-      "minY": ${Number(config.minY)},
-      "maxY": ${Number(config.maxY)},
-      "minX": ${Number(config.minX)},
-      "maxX": ${Number(config.maxX)}
-    }
+${vrPref}    "viewRestrictions": {
+${vrPref}      "minY": ${Number(config.minY)},
+${vrPref}      "maxY": ${Number(config.maxY)},
+${vrPref}      "minX": ${Number(config.minX)},
+${vrPref}      "maxX": ${Number(config.maxX)}
+${vrPref}    }
   }
 ],`;
     }
@@ -315,12 +423,12 @@ export default function App() {
     cameraInitZoom: ${Number(config.cameraInitZoom)},
     cameraZoomMinMax: [${Number(config.cameraZoomMin)}, ${Number(config.cameraZoomMax)}],
     cameraInitRotation: [${Number(config.cameraInitRotationX)}, ${Number(config.cameraInitRotationY)}],
-    viewRestrictions: {
-      minY: ${Number(config.minY)},
-      maxY: ${Number(config.maxY)},
-      minX: ${Number(config.minX)},
-      maxX: ${Number(config.maxX)},
-    },
+${vrPref}    viewRestrictions: {
+${vrPref}      minY: ${Number(config.minY)},
+${vrPref}      maxY: ${Number(config.maxY)},
+${vrPref}      minX: ${Number(config.minX)},
+${vrPref}      maxX: ${Number(config.maxX)},
+${vrPref}    },
   },
 ],`;
   };
@@ -549,6 +657,13 @@ export default function App() {
               <IconBuilding size={15} />
               Zonas Comunes
             </button>
+            <button
+              className={`tab-btn ${pantallaActiva === 'galeria' ? 'active-galeria' : ''}`}
+              onClick={() => setPantallaActiva('galeria')}
+            >
+              <IconImage size={15} />
+              Galería
+            </button>
           </nav>
 
           <button
@@ -564,6 +679,88 @@ export default function App() {
 
       {/* CONTENIDO PRINCIPAL APPLE */}
       <main className="main-content">
+        {pantallaActiva === 'galeria' && (
+          <section className="dash-card" style={{ marginBottom: '24px' }}>
+            <div className="card-header-flex">
+              <div className="card-title-group">
+                <div>
+                  <h3 className="card-title">Parámetros de Galería</h3>
+                  <p className="card-desc">Configuración global para las rutas de renders y plantas</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-grid-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div className="form-field">
+                <label className="form-label">Proyecto</label>
+                <input
+                  className="custom-input"
+                  type="text"
+                  value={config.proyecto}
+                  onChange={(e) => actualizarConfig("proyecto", e.target.value)}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Subcarpeta RUTA</label>
+                <input
+                  className="custom-input"
+                  type="text"
+                  value={config.galSubcarpeta ?? "galerias"}
+                  onChange={(e) => actualizarConfig("galSubcarpeta", e.target.value)}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Carpeta Renders</label>
+                <input
+                  className="custom-input"
+                  type="text"
+                  value={config.galCarpetaRenders ?? "renders"}
+                  onChange={(e) => actualizarConfig("galCarpetaRenders", e.target.value)}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Carpeta Plantas</label>
+                <input
+                  className="custom-input"
+                  type="text"
+                  value={config.galCarpetaPlantas ?? "plantas"}
+                  onChange={(e) => actualizarConfig("galCarpetaPlantas", e.target.value)}
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Extensión</label>
+                <select
+                  className="custom-select"
+                  value={config.galExtension ?? "jpg"}
+                  onChange={(e) => actualizarConfig("galExtension", e.target.value)}
+                >
+                  <option value="webp">webp</option>
+                  <option value="jpg">jpg</option>
+                  <option value="png">png</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label className="toggle-label" style={{ marginTop: '28px' }}>
+                  <input
+                    type="checkbox"
+                    className="toggle-checkbox"
+                    checked={config.galUsarPrefijoLow ?? false}
+                    onChange={(e) => actualizarConfig("galUsarPrefijoLow", e.target.checked)}
+                  />
+                  <span className={(config.galUsarPrefijoLow ?? false) ? 'toggle-text toggle-text-active' : 'toggle-text toggle-text-inactive'}>
+                    Prefijo LOW_ en URLs
+                  </span>
+                </label>
+              </div>
+            </div>
+          </section>
+        )}
+
         <div className="cards-grid">
           {/* PANEL IZQUIERDO */}
           {pantallaActiva === 'vistas' ? (
@@ -644,7 +841,7 @@ export default function App() {
                 </div>
               </section>
             </div>
-          ) : (
+          ) : pantallaActiva === 'zonas' ? (
             <div className="flex-col-gap-20">
               <section className="dash-card">
                 <div className="card-header-flex">
@@ -670,7 +867,7 @@ export default function App() {
                 <div className="flex-end-mt12">
                   <button
                     className="btn btn-secondary btn-sm"
-                    onClick={() => { setZcNombresInput(""); setZcCustomEdits({}); }}
+                    onClick={() => setZcNombresInput("")}
                   >
                     <RotateCcw size={13} />
                     Limpiar Lista Zonas
@@ -722,18 +919,123 @@ export default function App() {
                 </div>
               </section>
             </div>
+          ) : (
+            <>
+              {/* TARJETA DE RENDERS */}
+              <section className="dash-card">
+                <div className="card-header-flex">
+                  <div className="card-title-group">
+                    <div>
+                      <h3 className="card-title">Imágenes de Renders</h3>
+                      <p className="card-desc">Ingresa los nombres originales de los renders</p>
+                    </div>
+                  </div>
+                  <span className="badge-count">
+                    <IconImage size={13} />
+                    {galRendersBase.length}
+                  </span>
+                </div>
+
+                <textarea
+                  className="text-input-area input-area-md"
+                  value={galRendersInput}
+                  onChange={(e) => setGalRendersInput(e.target.value)}
+                  placeholder={`Ejemplo:\n01_Render_Cocina\n02_Render_Sala\n03_Render_Fachada`}
+                />
+
+                <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+                  <div className="card-header-flex">
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>Reemplazo de Nombres (Renders)</span>
+                    <label className="toggle-label">
+                      <input
+                        type="checkbox"
+                        className="toggle-checkbox"
+                        checked={galActivarReemplazoRenders}
+                        onChange={(e) => setGalActivarReemplazoRenders(e.target.checked)}
+                      />
+                      <span className={galActivarReemplazoRenders ? 'toggle-text toggle-text-active' : 'toggle-text toggle-text-inactive'}>
+                        {galActivarReemplazoRenders ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </label>
+                  </div>
+                  <textarea
+                    className="text-input-area input-area-sm"
+                    style={{ opacity: galActivarReemplazoRenders ? 1 : 0.45 }}
+                    value={galRendersReemplazoInput}
+                    onChange={(e) => setGalRendersReemplazoInput(e.target.value)}
+                    placeholder={`Nuevos nombres:\nCocina\nSala\nFachada`}
+                    disabled={!galActivarReemplazoRenders}
+                  />
+                  <div className="flex-between-wrap-mt14">
+                    <StatusPill estado={galRendersCoincidenciaEstado} />
+                  </div>
+                </div>
+              </section>
+
+              {/* TARJETA DE PLANTAS */}
+              <section className="dash-card">
+                <div className="card-header-flex">
+                  <div className="card-title-group">
+                    <div>
+                      <h3 className="card-title">Imágenes de Plantas</h3>
+                      <p className="card-desc">Ingresa los nombres originales de las plantas</p>
+                    </div>
+                  </div>
+                  <span className="badge-count">
+                    <IconImage size={13} />
+                    {galPlantasBase.length}
+                  </span>
+                </div>
+
+                <textarea
+                  className="text-input-area input-area-md"
+                  value={galPlantasInput}
+                  onChange={(e) => setGalPlantasInput(e.target.value)}
+                  placeholder={`Ejemplo:\nPlanta_Tipo_1\nPlanta_Tipo_2`}
+                />
+
+                <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+                  <div className="card-header-flex">
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>Reemplazo de Nombres (Plantas)</span>
+                    <label className="toggle-label">
+                      <input
+                        type="checkbox"
+                        className="toggle-checkbox"
+                        checked={galActivarReemplazoPlantas}
+                        onChange={(e) => setGalActivarReemplazoPlantas(e.target.checked)}
+                      />
+                      <span className={galActivarReemplazoPlantas ? 'toggle-text toggle-text-active' : 'toggle-text toggle-text-inactive'}>
+                        {galActivarReemplazoPlantas ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </label>
+                  </div>
+                  <textarea
+                    className="text-input-area input-area-sm"
+                    style={{ opacity: galActivarReemplazoPlantas ? 1 : 0.45 }}
+                    value={galPlantasReemplazoInput}
+                    onChange={(e) => setGalPlantasReemplazoInput(e.target.value)}
+                    placeholder={`Nuevos nombres:\nTipo 1\nTipo 2`}
+                    disabled={!galActivarReemplazoPlantas}
+                  />
+                  <div className="flex-between-wrap-mt14">
+                    <StatusPill estado={galPlantasCoincidenciaEstado} />
+                  </div>
+                </div>
+              </section>
+            </>
           )}
 
           {/* PANEL 2: CONFIGURACIÓN GENERAL */}
-          <section className="dash-card">
-            <div className="card-header-flex">
-              <div className="card-title-group">
-                <div>
-                  <h3 className="card-title">2. Parámetros Generales</h3>
-                  <p className="card-desc">Configuración global para rutas y cámara</p>
+          {pantallaActiva !== 'galeria' && (
+            <section className="dash-card">
+              <div className="card-header-flex">
+                <div className="card-title-group">
+                  <div>
+                    <h3 className="card-title">2. Parámetros Generales</h3>
+                    <p className="card-desc">Configuración global para rutas y cámara</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div className="form-grid-layout">
               <div className="form-field full-width">
@@ -819,8 +1121,23 @@ export default function App() {
                   />
                 </div>
               </div>
+
+              <div className="form-field full-width">
+                <label className="toggle-label" style={{ marginTop: '10px' }}>
+                  <input
+                    type="checkbox"
+                    className="toggle-checkbox"
+                    checked={config.comentarViewRestrictions}
+                    onChange={(e) => actualizarConfig("comentarViewRestrictions", e.target.checked)}
+                  />
+                  <span className={config.comentarViewRestrictions ? 'toggle-text toggle-text-active' : 'toggle-text toggle-text-inactive'}>
+                    Comentar <code style={{ fontFamily: 'var(--font-mono)' }}>viewRestrictions</code> en JSON de salida
+                  </span>
+                </label>
+              </div>
             </div>
           </section>
+          )}
         </div>
 
         {pantallaActiva === 'vistas' && (
@@ -1072,42 +1389,14 @@ export default function App() {
 
         {pantallaActiva === 'zonas' && (
           <div style={{ marginTop: '16px' }}>
-            {zcItems.length > 0 && (
-              <div className="zone-title-bar animate-fade-in">
-                <h3 className="card-title zone-header-flex">
-                  <IconBuilding size={18} />
-                  Edición de Zonas Comunes ({zcItems.length})
-                </h3>
-                <button
-                  className="btn btn-ghost-danger btn-sm"
-                  onClick={() => { setZcNombresInput(""); setZcNombresReemplazoInput(""); setZcCustomEdits({}); }}
-                >
-                  <Trash2 size={14} />
-                  Limpiar Todo
-                </button>
-              </div>
-            )}
-
-            {zcItems.length === 0 ? (
-              <div className="code-viewer-container empty-placeholder">
+            {zcItems.length === 0 && (
+              <div className="code-viewer-container empty-placeholder" style={{ marginTop: '24px' }}>
                 <div className="empty-icon-box">
                   <IconBuilding size={24} />
                 </div>
                 <p className="zone-empty-msg">
                   Escribe los nombres de las zonas comunes en el cuadro superior para generar en tiempo real...
                 </p>
-              </div>
-            ) : (
-              <div className="zone-grid">
-                {zcBloquesGenerados.map((bloque, index) => (
-                  <ZonaComunCard
-                    key={bloque.item.id}
-                    index={index}
-                    bloque={bloque}
-                    onUpdate={zcActualizarItem}
-                    onDelete={zcEliminarItem}
-                  />
-                ))}
               </div>
             )}
 
@@ -1144,6 +1433,48 @@ export default function App() {
                   colorClave="var(--accent-purple)"
                   copiadoNombres={copiadoNombresZC}
                   onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresZC)}
+                />
+              </section>
+            )}
+          </div>
+        )}
+
+        {pantallaActiva === 'galeria' && (
+          <div style={{ marginTop: '16px' }}>
+            {galBloquesGenerados.length > 0 && (
+              <section className="result-section-card zone-result-section">
+                <div className="card-header-flex">
+                  <div>
+                    <h3 className="card-title">Resultado Final Galería (JSON5)</h3>
+                    <p className="card-desc">Estructura combinada de Renders y Plantas lista para copiar</p>
+                  </div>
+                  <div className="zone-flex-10" style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn btn-secondary" onClick={() => setGalColapsados(!galColapsados)}>
+                      {galColapsados ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
+                      <span>{galColapsados ? "Expandir" : "Colapsar"}</span>
+                    </button>
+                    <button
+                      className="btn"
+                      style={{ backgroundColor: 'var(--accent-orange)', color: '#fff' }}
+                      onClick={() =>
+                        copiarTexto(
+                          galBloquesGenerados.map((b) => b.contenido).join('\n\n'),
+                          setCopiadoGal
+                        )
+                      }
+                    >
+                      {copiadoGal ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copiadoGal ? 'Copiado' : 'Copiar Código Completo'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <SeccionResultadoConNombres
+                  bloques={galBloquesGenerados}
+                  colapsados={galColapsados}
+                  colorClave="var(--accent-orange)"
+                  copiadoNombres={copiadoNombresGal}
+                  onCopiarNombres={(txt) => copiarTexto(txt, setCopiadoNombresGal)}
                 />
               </section>
             )}
@@ -1209,7 +1540,7 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
             <details open={!colapsados}>
               <summary className="code-block-header">
                 <span className="code-block-title">
-                  <IconCode size={14} style={{ color: colorClave }} />
+                  <IconCode size={14} color="var(--text-primary)" />
                   <span style={{ color: colorClave, fontWeight: '500' }}>"{item.nombre}"</span>
                 </span>
                 <span className="json-type-badge">JSON5</span>
@@ -1240,78 +1571,6 @@ function SeccionResultadoConNombres({ bloques, colapsados, colorClave, copiadoNo
           value={listaNombresTexto}
           readOnly
         />
-      </div>
-    </div>
-  );
-}
-
-function ZonaComunCard({ index, bloque, onUpdate, onDelete }) {
-  const item = bloque.item;
-
-  return (
-    <div className="dash-card zone-card-item animate-fade-in">
-      <div className="zone-card-header">
-        <span className="zone-card-title">
-          #{index + 1} — {item.clave}
-        </span>
-        <button
-          className="btn btn-ghost-danger btn-xs"
-          onClick={() => onDelete(item.id)}
-        >
-          <Trash2 size={13} />
-          Eliminar
-        </button>
-      </div>
-
-      <div className="zone-form-grid">
-        <div className="form-field full-width">
-          <label className="form-label">Clave</label>
-          <input
-            className="custom-input"
-            value={item.clave}
-            onChange={(e) => onUpdate(item.id, 'clave', e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Title 1 (ES)</label>
-          <input
-            className="custom-input"
-            value={item.title1Es}
-            onChange={(e) => onUpdate(item.id, 'title1Es', e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Title 1 (EN)</label>
-          <input
-            className="custom-input"
-            value={item.title1En}
-            onChange={(e) => onUpdate(item.id, 'title1En', e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Title 2 (ES)</label>
-          <input
-            className="custom-input"
-            value={item.title2Es}
-            onChange={(e) => onUpdate(item.id, 'title2Es', e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Title 2 (EN)</label>
-          <input
-            className="custom-input"
-            value={item.title2En}
-            onChange={(e) => onUpdate(item.id, 'title2En', e.target.value)}
-          />
-        </div>
-        <div className="form-field full-width">
-          <label className="form-label">URL Vista 360</label>
-          <input
-            className="custom-input"
-            value={item.url}
-            onChange={(e) => onUpdate(item.id, 'url', e.target.value)}
-          />
-        </div>
       </div>
     </div>
   );
